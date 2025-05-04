@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Estatísticas de Consumo</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <h2>Estatísticas de Consumo</h2>
+    <div class="itens-consumo">
+        {% for nome_item, dados_item in dados_grafico.items() %}
+        <div class="item" data-item-id = {{loop.index}}>
+            <h3 class="item-nome">{{ nome_item }}</h3>
+            <ul class="consumo-lista" style="display: none;">
+                {% for consumo in dados_item %}
+                <li>
+                    Data: {{ consumo['data_consumo'][:10] }}
+                    Hora: {{ consumo['data_consumo'][11:19] }},
+                    Quantidade: {{ consumo['quantidade'] }}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+
+</html>

@@ -25,7 +25,30 @@ def init_db():
                 data_cadastro TEXT NOT NULL
             )
         ''')
+
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS consumo (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL,
+                quantidade INTEGER NOT NULL,
+                data_consumo TEXT NOT NULL,
+                FOREIGN KEY (item_id) REFERENCES estoque(id)
+            )
+        ''')
         conn.commit()
+
+# Função para formatar a data e a hora (filtro strftime)
+def format_datetime(value):
+    if value is None:
+        return ""
+    try:
+        date_object = datetime.fromisoformat(value)
+        return date_object.strftime("%d/%m/%Y - %H:%M")
+    except ValueError:
+        return "Data Inválida"
+
+#Registrar o filtro no app
+app.jinja_env.filters['strftime'] = format_datetime
 
 # Rota principal - Exibe a página principal
 @app.route('/')
@@ -68,6 +91,11 @@ def consumir(item_id):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute('UPDATE estoque SET quantidade = quantidade - 1 WHERE id = ? AND quantidade > 0', (item_id,))
+        
+        # Registra o consumo na tabela 'consumo'
+        data_consumo = datetime.now().isoformat()
+        cursor.execute('INSERT INTO consumo (item_id, quantidade, data_consumo) VALUES (?, ?, ?)', (item_id, 1, data_consumo))
+        
         conn.commit()
         conn.close()
         return jsonify({'message': 'Item consumido com sucesso'})  # Retorna JSON
@@ -102,6 +130,39 @@ def excluir_item(item_id):
         return jsonify({'message': 'Item excluido com sucesso'})  # Retorna JSON
     except sqlite3.Error as e:
         return jsonify({'message': f'Erro ao excluir o item: {str(e)}'}), 500
+
+# Rota para exibir as estatísticas de consumo
+@app.route('/estatisticas')
+def estatisticas():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT 
+                estoque.nome,
+                consumo.data_consumo,
+                consumo.quantidade
+            FROM consumo
+            JOIN estoque ON consumo.item_id = estoque.id
+            ORDER BY estoque.nome, consumo.data_consumo
+        ''')
+        itens_consumo = cursor.fetchall()
+
+        # Organizar os dados por item
+        dados_grafico = {}
+        for item in itens_consumo:
+            nome_item = item['nome']
+            if nome_item not in dados_grafico:
+                dados_grafico[nome_item] = []
+            dados_grafico[nome_item].append({
+                'data_consumo': item['data_consumo'],
+                'quantidade': item['quantidade']
+                })
+
+        conn.close()
+        return render_template('estatisticas.html', dados_grafico=dados_grafico)
+    except sqlite3.Error as e:
+        return jsonify({'message': f'Erro ao acessar o banco de dados: {str(e)}'}), 500
 
 if __name__ == '__main__':
     init_db()  # Inicializa o banco de dados, caso não exista

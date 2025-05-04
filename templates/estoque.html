@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Controle de Estoque</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
     <h2>Itens em Estoque</h2>
     <button class="btn-toggle-form" onclick="toggleForm()">Adicionar Novo Item</button>
@@ -45,11 +47,13 @@
                     <input type="number" name="quantidade" placeholder="Nova quantidade" required>
                     <button type="submit" class="btn-editar-salvar">Salvar</button>
                     <button type="button" class="btn-editar-cancelar" onclick="toggleEdit('{{ item.id }}')">Cancelar</button>
+                    
                 </form>
-                <button class="btn-excluir" data-item-id="{{ item.id }}">Excluir 🗑️</button>
+                 <button class="btn-excluir" data-item-id="{{ item.id }}">Excluir 🗑️</button>
             </div>
         </div>
         {% endfor %}
     </div>
 </body>
+
 </html>

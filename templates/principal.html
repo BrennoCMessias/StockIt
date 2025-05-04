@@ -1,17 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <title>Página Inicial</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
+
 <body>
     <div class="container">
         <div class="sidebar">
             <button id="btn-estoque" class="btn-estoque">
-               <i class="fas fa-box-open"></i> Estoque
+                <i class="fas fa-box-open"></i> Estoque
+            </button>
+            <button id="btn-estoque" class="btn-estoque">
+                <i class="fas fa-chart-bar"></i> Estatísticas
             </button>
         </div>
         <div id="estoque-container" style="display: none;">
@@ -19,106 +26,130 @@
         </div>
     </div>
     <script>
-        let estoqueVisivel = false;  // Variável para controlar a visibilidade do estoque
+        let estoqueVisivel = false;
+        let estatisticasVisivel = false;
+
         function carregarEstoque() {
             fetch('/estoque')
                 .then(response => response.text())
                 .then(data => {
                     document.getElementById('estoque-container').innerHTML = data;
-                    // Adicionar os event listeners aos botões após carregar o conteúdo
                     adicionarEventListeners();
                 });
         }
 
+        function carregarEstatisticas() {
+            fetch('/estatisticas')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('estoque-container').innerHTML = data;
+                });
+        }
+
         function adicionarEventListeners() {
-            // Mover toggleForm para cá
-            window.toggleForm = function() {
+            window.toggleForm = function () {
                 const formContainer = document.getElementById('form-container');
                 formContainer.classList.toggle('visible');
             }
-                
-             // Event listener para o botão de adicionar
-            $('#form-adicionar').submit(function(event) {
+
+            $('#form-adicionar').off('submit').on('submit', function (event) {
                 event.preventDefault();
                 $.post('/adicionar', $(this).serialize())
-                .done(function(response) {
-                    //alert(response.message); // Remove a mensagem de sucesso
-                    carregarEstoque(); // Recarrega o estoque
-                })
-                .fail(function(error) {
-                    alert('Erro: ' + error.responseJSON.message);
-                });
-            });
-            
-            // Event listeners para os botões de consumir, editar e excluir
-            $(document).off('click', '.btn-consumir').on('click', '.btn-consumir', function(event) {
-                event.preventDefault(); // Evita a propagação do evento
-                var itemId = $(this).data('item-id');
-                $.get('/consumir/' + itemId)
-                .done(function(response) {
-                    carregarEstoque();
-                })
-                .fail(function(error) {
-                    alert('Erro: ' + error.responseJSON.message);
-                });
+                    .done(function (response) {
+                        carregarEstoque();
+                    })
+                    .fail(function (error) {
+                        alert('Erro: ' + error.responseJSON.message);
+                    });
             });
 
-            $(document).off('submit', '.form-editar').on('submit', '.form-editar', function(event) {
+            $(document).off('click', '.btn-consumir').on('click', '.btn-consumir', function (event) {
+                event.preventDefault();
+                var itemId = $(this).data('item-id');
+                $.get('/consumir/' + itemId)
+                    .done(function (response) {
+                        carregarEstoque();
+                    })
+                    .fail(function (error) {
+                        alert('Erro: ' + error.responseJSON.message);
+                    });
+            });
+
+            $(document).off('submit', '.form-editar').on('submit', '.form-editar', function (event) {
                 event.preventDefault();
                 var itemId = $(this).data('item-id');
                 $.post('/editar/' + itemId, $(this).serialize())
-                .done(function(response) {
-                    carregarEstoque();
-                })
-                .fail(function(error) {
-                    alert('Erro: ' + error.responseJSON.message);
-                });
+                    .done(function (response) {
+                        carregarEstoque();
+                    })
+                    .fail(function (error) {
+                        alert('Erro: ' + error.responseJSON.message);
+                    });
             });
 
-            $(document).off('click', '.btn-excluir').on('click', '.btn-excluir', function() {
+            $(document).off('click', '.btn-excluir').on('click', '.btn-excluir', function () {
                 var itemId = $(this).data('item-id');
                 if (confirm('Tem certeza?')) {
                     $.post('/excluir/' + itemId)
-                    .done(function(response) {
-                        carregarEstoque();
-                    })
-                    .fail(function(error) {
-                        alert('Erro: ' + error.responseJSON.message);
-                    });
+                        .done(function (response) {
+                            carregarEstoque();
+                        })
+                        .fail(function (error) {
+                            alert('Erro: ' + error.responseJSON.message);
+                        });
                 }
             });
-            
-             // Event listener para mostrar/esconder o formulário de edição
-            $(document).off('click', '.btn-editar').on('click', '.btn-editar', function() {
+
+            $(document).off('click', '.btn-editar').on('click', '.btn-editar', function () {
                 var itemId = $(this).data('item-id');
                 $('#edit-form-' + itemId).toggle();
             });
-            
-             // Event listener para o formulário de edição
-            $(document).off('submit', '.form-editar').on('submit', '.form-editar', function(event) {
-                event.preventDefault();
-                var itemId = $(this).data('item-id');
-                $.post('/editar/' + itemId, $(this).serialize())
-                .done(function(response) {
-                    //alert(response.message);
-                    carregarEstoque();
-                })
-                .fail(function(error) {
-                    alert('Erro: ' + error.responseJSON.message);
-                });
+
+          // Evento para cancelar a edição
+            $(document).off('click', '.btn-editar-cancelar').on('click', '.btn-editar-cancelar', function (event) {
+                var itemId = $(this).closest('.edit-form').data('item-id');
+                $('#edit-form-' + itemId).hide(); // Esconde o formulário de edição
+            });
+
+            // Evento de click nos itens de estatistica
+            $(document).off('click', '.item-nome').on('click', '.item-nome', function (event) {
+                var itemId = $(this).parent().attr('data-item-id');
+                console.log(itemId)
+                $(`.item[data-item-id='${itemId}'] > .consumo-lista`).slideToggle()
             });
         }
 
-        document.getElementById('btn-estoque').addEventListener('click', function() {
-            estoqueVisivel = !estoqueVisivel;  // Inverte o estado da visibilidade
-            if (estoqueVisivel) {
-                carregarEstoque();   // Carrega o estoque
-                document.getElementById('estoque-container').style.display = 'block'; // Mostra o container
-            } else {
-                document.getElementById('estoque-container').innerHTML = '';  // Limpa o container
-                document.getElementById('estoque-container').style.display = 'none'; // Esconde o container
+        // Função genérica para exibir a aba selecionada
+        function toggleAba(aba) {
+            let abaVisivel = aba === 'estoque' ? estoqueVisivel : estatisticasVisivel;
+
+            // Esconde todas as abas
+            estoqueVisivel = false;
+            estatisticasVisivel = false;
+            document.getElementById('estoque-container').style.display = 'none';
+            document.getElementById('estoque-container').innerHTML = '';
+
+            // Se a aba clicada não estava visível, exibe-a
+            if (!abaVisivel) {
+                if (aba === 'estoque') {
+                    estoqueVisivel = true;
+                    carregarEstoque();
+                } else if (aba === 'estatisticas') {
+                    estatisticasVisivel = true;
+                    carregarEstatisticas();
+                }
+                document.getElementById('estoque-container').style.display = 'block';
             }
+        }
+
+        document.getElementById('btn-estoque').addEventListener('click', function () {
+            toggleAba('estoque');
+        });
+
+        document.getElementById('btn-estatisticas').addEventListener('click', function () {
+            toggleAba('estatisticas');
         });
     </script>
 </body>
+
 </html>
