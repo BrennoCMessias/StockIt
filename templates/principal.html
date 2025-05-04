@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Página Inicial</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <button id="btn-estoque" class="btn-estoque">
+               <i class="fas fa-box-open"></i> Estoque
+            </button>
+        </div>
+        <div id="estoque-container" style="display: none;">
+            <!-- O conteúdo de estoque.html será carregado aqui -->
+        </div>
+    </div>
+    <script>
+        let estoqueVisivel = false;  // Variável para controlar a visibilidade do estoque
+        function carregarEstoque() {
+            fetch('/estoque')
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('estoque-container').innerHTML = data;
+                    // Adicionar os event listeners aos botões após carregar o conteúdo
+                    adicionarEventListeners();
+                });
+        }
+
+        function adicionarEventListeners() {
+            // Mover toggleForm para cá
+            window.toggleForm = function() {
+                const formContainer = document.getElementById('form-container');
+                formContainer.classList.toggle('visible');
+            }
+                
+             // Event listener para o botão de adicionar
+            $('#form-adicionar').submit(function(event) {
+                event.preventDefault();
+                $.post('/adicionar', $(this).serialize())
+                .done(function(response) {
+                    //alert(response.message); // Remove a mensagem de sucesso
+                    carregarEstoque(); // Recarrega o estoque
+                })
+                .fail(function(error) {
+                    alert('Erro: ' + error.responseJSON.message);
+                });
+            });
+            
+            // Event listeners para os botões de consumir, editar e excluir
+            $(document).off('click', '.btn-consumir').on('click', '.btn-consumir', function(event) {
+                event.preventDefault(); // Evita a propagação do evento
+                var itemId = $(this).data('item-id');
+                $.get('/consumir/' + itemId)
+                .done(function(response) {
+                    carregarEstoque();
+                })
+                .fail(function(error) {
+                    alert('Erro: ' + error.responseJSON.message);
+                });
+            });
+
+            $(document).off('submit', '.form-editar').on('submit', '.form-editar', function(event) {
+                event.preventDefault();
+                var itemId = $(this).data('item-id');
+                $.post('/editar/' + itemId, $(this).serialize())
+                .done(function(response) {
+                    carregarEstoque();
+                })
+                .fail(function(error) {
+                    alert('Erro: ' + error.responseJSON.message);
+                });
+            });
+
+            $(document).off('click', '.btn-excluir').on('click', '.btn-excluir', function() {
+                var itemId = $(this).data('item-id');
+                if (confirm('Tem certeza?')) {
+                    $.post('/excluir/' + itemId)
+                    .done(function(response) {
+                        carregarEstoque();
+                    })
+                    .fail(function(error) {
+                        alert('Erro: ' + error.responseJSON.message);
+                    });
+                }
+            });
+            
+             // Event listener para mostrar/esconder o formulário de edição
+            $(document).off('click', '.btn-editar').on('click', '.btn-editar', function() {
+                var itemId = $(this).data('item-id');
+                $('#edit-form-' + itemId).toggle();
+            });
+            
+             // Event listener para o formulário de edição
+            $(document).off('submit', '.form-editar').on('submit', '.form-editar', function(event) {
+                event.preventDefault();
+                var itemId = $(this).data('item-id');
+                $.post('/editar/' + itemId, $(this).serialize())
+                .done(function(response) {
+                    //alert(response.message);
+                    carregarEstoque();
+                })
+                .fail(function(error) {
+                    alert('Erro: ' + error.responseJSON.message);
+                });
+            });
+        }
+
+        document.getElementById('btn-estoque').addEventListener('click', function() {
+            estoqueVisivel = !estoqueVisivel;  // Inverte o estado da visibilidade
+            if (estoqueVisivel) {
+                carregarEstoque();   // Carrega o estoque
+                document.getElementById('estoque-container').style.display = 'block'; // Mostra o container
+            } else {
+                document.getElementById('estoque-container').innerHTML = '';  // Limpa o container
+                document.getElementById('estoque-container').style.display = 'none'; // Esconde o container
+            }
+        });
+    </script>
+</body>
+</html>

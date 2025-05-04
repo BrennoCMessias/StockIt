@@ -1,0 +1,397 @@
+body {
+    background-color: #f9f9f9;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh; /* Garante que o body ocupe toda a altura da tela */
+}
+
+.container {
+    display: flex;
+    width: 100%; /* Ocupa 100% da largura da tela */
+    height: 100%; /* Ocupa 100% da altura da tela */
+    margin: 0; /* Remove margens */
+    background-color: #ffffff;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    border-radius: 0; /* Remove bordas arredondadas */
+}
+
+.sidebar {
+    width: 250px; /* Largura da barra lateral */
+    background-color: #343a40; /* Cor de fundo escura */
+    color: #ffffff; /* Cor do texto */
+    padding: 20px;
+    border-radius: 0; /* Remove bordas arredondadas */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sidebar button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #495057; /* Cor de fundo um pouco mais clara */
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s ease; /* Transição suave ao passar o mouse */
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar button i {
+    margin-right: 10px; /* Espaço entre o ícone e o texto */
+}
+
+.sidebar button:hover {
+    background-color: #6c757d; /* Cor de fundo ao passar o mouse */
+}
+
+#estoque-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo for muito grande */
+}
+
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+
+.itens-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px; 
+}
+
+.item-box {
+    background-color: #f8f8f8;
+    padding: 15px;
+    border-radius: 8px;
+    width: calc(33.33% - 10px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.item-box:hover {
+    transform: scale(1);
+}
+
+.item-info {
+    text-align: center;
+}
+
+h3 {
+    color: #333;
+    font-size: 1.2rem;
+}
+
+p {
+    color: #666;
+    font-size: 1rem;
+}
+
+button {
+    padding: 8px 15px;
+    margin: 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.btn-consumir {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-editar {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-editar-salvar {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-editar-cancelar {
+    background-color: #dc3545;
+    color: white;
+}
+
+.edit-form {
+    display: none;
+    margin-top: 10px;
+}
+
+form input {
+    padding: 8px;
+    margin: 5px;
+    width: calc(100% - 16px);
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+form button {
+    width: 100%;
+}
+
+.form-adicionar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.form-adicionar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    transition: border 0.3s;
+}
+
+input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+button {
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+button:focus {
+    outline: none;
+}
+
+.btn-adicionar-novo {
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: background-color 0.3s;
+    margin-bottom: 20px;
+}
+
+.btn-adicionar-novo:hover {
+    background-color: #0056b3;
+}
+
+.btn-adicionar-novo:focus {
+    outline: none;
+}
+
+/* Estilo para o botão de "Adicionar Novo Item" */
+.btn-toggle-form {
+    display: block;
+    margin: 20px auto;  /* Centraliza o botão */
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.btn-toggle-form:hover {
+    background-color: #45a049;
+}
+
+.btn-toggle-form:focus {
+    outline: none;
+}
+
+/* Formulário oculto por padrão */
+.form-container {
+    display: none;
+    margin-top: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Quando o formulário estiver visível */
+.form-container.visible {
+    display: block;
+    opacity: 1;
+}
+
+/* O resto do estilo do formulário permanece o mesmo */
+.form-adicionar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    transition: border 0.3s;
+}
+
+input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+button {
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+button:focus {
+    outline: none;
+}
+
+/* Botão de Excluir (com ícone de lixeirinha) */
+.btn-excluir {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.3s;
+}
+
+.btn-excluir:hover {
+    background-color: #c82333;
+}
+
+.btn-excluir i {
+    font-size: 1.2rem; /* Ícone maior */
+}
+
+.btn-excluir:focus {
+    outline: none;
+}
+
+/* Estilos para o botão na barra lateral */
+.sidebar .btn-estoque {
+    background-color: #6c757d; /* Cor de fundo do botão */
+    color: white; /* Cor do texto */
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar .btn-estoque:hover {
+    background-color: #5a6268; /* Cor de fundo ao passar o mouse */
+}
+
+.sidebar .btn-estoque i {
+    margin-right: 5px; /* Espaçamento para o ícone, se houver */
+}
+
+/* Estilos para a barra lateral */
+.sidebar {
+    width: 250px; /* Largura da barra lateral */
+    background-color: #343a40; /* Cor de fundo escura */
+    color: #ffffff; /* Cor do texto */
+    padding: 20px;
+    border-radius: 0; /* Remove bordas arredondadas */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+}
+
+/* Estilos para o contêiner principal (para garantir que a barra lateral e o conteúdo fiquem lado a lado) */
+.container {
+    display: flex;
+    width: 100%; /* Ocupa 100% da largura da tela */
+    height: 100%; /* Ocupa 100% da altura da tela */
+    margin: 0; /* Remove margens */
+    background-color: #ffffff;
+    box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+    border-radius: 0; /* Remove bordas arredondadas */
+}
+
+/* Ajuste para o contêiner de estoque (para que ele ocupe o espaço restante) */
+#estoque-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto; /* Adiciona barra de rolagem vertical se o conteúdo for muito grande */
+}
