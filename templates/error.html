@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Erro</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f8f9fa; text-align: center;}
+        .error-container { background: #fff; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; }
+        h1 { color: #dc3545; margin-bottom: 15px; border-bottom: none; }
+        p { color: #6c757d; margin-bottom: 25px; }
+        a { color: #007bff; text-decoration: none; font-weight: 500; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1><i class="fas fa-exclamation-triangle" style="margin-right: 10px;"></i>Ocorreu um Erro</h1>
+        <p>{{ message | default('Não foi possível processar sua solicitação.') }}</p>
+        <a href="{{ url_for('principal') }}">Voltar para a página inicial</a>
+    </div>
+    <!-- Font Awesome for icon -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+</body>
+</html>

@@ -1,94 +1,80 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <title>Controle de Estoque</title>
-    <!-- Link to CSS should be relative to the static folder configured in Flask -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Font Awesome if used -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
-
 <body>
     <h2>Itens em Estoque</h2>
-    <!-- Button to toggle the add form -->
+    <!-- O botão de toggle agora é exposto globalmente via window.toggleForm -->
     <button class="btn-toggle-form btn-adicionar-novo" onclick="toggleForm()">
          <i class="fas fa-plus"></i> Adicionar Novo Item
     </button>
 
-    <!-- Form container for adding new items, initially hidden -->
-    <div id="form-container" class="form-container">
-        <!-- Use ID here as there's only one add form -->
+    <div id="form-container" class="form-container" style="display: none;"> <!-- Start hidden -->
         <form id="form-adicionar" class="form-adicionar">
             <div class="form-group">
-                <label for="nome">Nome do Item</label>
-                <input type="text" name="nome" id="nome" placeholder="Nome do Item" required>
+                <label for="add-nome">Nome do Item</label>
+                <input type="text" name="nome" id="add-nome" placeholder="Nome único do item" required>
             </div>
             <div class="form-group">
-                <label for="quantidade">Quantidade</label>
-                <input type="number" name="quantidade" id="quantidade" placeholder="Quantidade" min="0" required>
+                <label for="add-quantidade">Quantidade</label>
+                <input type="number" name="quantidade" id="add-quantidade" placeholder="Quantidade inicial" min="0" required>
             </div>
             <div class="form-group">
-                <label for="data_cadastro">Data de Cadastro</label>
-                <input type="date" name="data_cadastro" id="data_cadastro" required>
+                <label for="add-data_cadastro">Data de Cadastro</label>
+                <input type="date" name="data_cadastro" id="add-data_cadastro" required>
             </div>
             <button type="submit" class="btn-adicionar">Adicionar Item</button>
-            <button type="button" class="btn-cancelar-adicionar" onclick="toggleForm()">Cancelar</button> <!-- Added cancel -->
+            <button type="button" class="btn-cancelar-adicionar" onclick="toggleForm()">Cancelar</button>
         </form>
     </div>
 
-    <!-- Container for the stock items -->
     <div class="itens-container">
         {% if not itens %}
             <p>Nenhum item em estoque.</p>
+        {% else %}
+            {% for item in itens %}
+            <div class="item-box" id="item-{{ item.id }}">
+                <div class="item-info">
+                    <h3 title="{{ item.nome }}">{{ item.nome }}</h3>
+                    <p>Quantidade: <span class="quantidade-display">{{ item.quantidade }}</span></p>
+                     <p><small>Cadastrado em: {{ item.data_cadastro | strftime if item.data_cadastro else 'N/A' }}</small></p>
+                    <button class="btn-consumir" data-item-id="{{ item.id }}" title="Consumir 1 unidade" {% if item.quantidade <= 0 %}disabled{% endif %}>
+                        <i class="fas fa-minus-circle"></i> Consumir
+                    </button>
+                    <button class="btn-editar" data-item-id="{{ item.id }}" title="Editar item">
+                         <i class="fas fa-edit"></i> Editar
+                    </button>
+                </div>
+
+                <div class="edit-form" id="edit-form-{{ item.id }}" style="display: none;">
+                    <form class="form-editar" data-item-id="{{ item.id }}">
+                        <div class="form-group">
+                             <label for="edit-nome-{{ item.id }}">Nome</label>
+                            <input type="text" id="edit-nome-{{ item.id }}" name="nome" value="{{ item.nome }}" required>
+                        </div>
+                        <div class="form-group">
+                             <label for="edit-quantidade-{{ item.id }}">Quantidade</label>
+                            <input type="number" id="edit-quantidade-{{ item.id }}" name="quantidade" value="{{ item.quantidade }}" min="0" required>
+                         </div>
+                        <button type="submit" class="btn-editar-salvar" title="Salvar alterações">
+                            <i class="fas fa-save"></i> Salvar
+                        </button>
+                        <button type="button" class="btn-editar-cancelar" data-item-id="{{ item.id }}" title="Cancelar edição">
+                             <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </form>
+                    <button class="btn-excluir" data-item-id="{{ item.id }}" title="Excluir item permanentemente">
+                        <i class="fas fa-trash-alt"></i> Excluir Item
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
         {% endif %}
-        {% for item in itens %}
-        <!-- Unique ID for the item's container -->
-        <div class="item-box" id="item-{{ item.id }}">
-            <div class="item-info">
-                <h3 title="{{ item.nome }}">{{ item.nome }}</h3> <!-- Use title for long names -->
-                <p>Quantidade: <span class="quantidade-display">{{ item.quantidade }}</span></p>
-                <!-- Use class for buttons inside the loop -->
-                <button class="btn-consumir" data-item-id="{{ item.id }}" title="Consumir 1 unidade">
-                    <i class="fas fa-minus-circle"></i> Consumir
-                </button>
-                <button class="btn-editar" data-item-id="{{ item.id }}" title="Editar item">
-                     <i class="fas fa-edit"></i> Editar
-                </button>
-            </div>
-
-            <!-- Edit form, unique ID, initially hidden -->
-            <div class="edit-form" id="edit-form-{{ item.id }}" style="display: none;">
-                <!-- Use class for the form inside the loop, keep data-item-id -->
-                <form class="form-editar" data-item-id="{{ item.id }}">
-                    <div class="form-group">
-                         <label for="edit-nome-{{ item.id }}">Novo Nome</label>
-                        <input type="text" id="edit-nome-{{ item.id }}" name="nome" placeholder="Novo nome" value="{{ item.nome }}" required>
-                    </div>
-                    <div class="form-group">
-                         <label for="edit-quantidade-{{ item.id }}">Nova Quantidade</label>
-                        <input type="number" id="edit-quantidade-{{ item.id }}" name="quantidade" placeholder="Nova quantidade" value="{{ item.quantidade }}" min="0" required>
-                     </div>
-                    <button type="submit" class="btn-editar-salvar" title="Salvar alterações">
-                        <i class="fas fa-save"></i> Salvar
-                    </button>
-                    <!-- Pass item.id to the toggleEdit function -->
-                    <button type="button" class="btn-editar-cancelar" data-item-id="{{ item.id }}" title="Cancelar edição">
-                         <i class="fas fa-times"></i> Cancelar
-                    </button>
-                </form>
-                 <!-- Use class for delete button, keep data-item-id -->
-                <button class="btn-excluir" data-item-id="{{ item.id }}" title="Excluir item permanentemente">
-                    <i class="fas fa-trash-alt"></i> Excluir
-                </button>
-            </div>
-        </div>
-        {% endfor %}
     </div>
-
+     <!-- Scripts são carregados/executados em principal.html -->
 </body>
-
 </html>

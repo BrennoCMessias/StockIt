@@ -1,30 +1,45 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <title>Estatísticas de Consumo</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .item-nome { cursor: pointer; }
+        .item-nome:hover { color: #0056b3; }
+        .consumo-lista { display: none; margin-top: 5px; padding-left: 20px; }
+        .consumo-lista li { padding: 6px 0; border-bottom: 1px solid #eee; font-size: 0.9em; }
+        .consumo-lista li:last-child { border-bottom: none; }
+        .item-nome i.fa-caret-right, .item-nome i.fa-caret-down { transition: transform 0.2s ease-in-out; }
+    </style>
 </head>
-
 <body>
     <h2>Estatísticas de Consumo</h2>
+    <p><small>Clique no nome do item para ver/ocultar o histórico detalhado.</small></p>
     <div class="itens-consumo">
-        {% for nome_item, dados_item in dados_grafico.items() %}
-        <div class="item" data-item-id = {{loop.index}}>
-            <h3 class="item-nome">{{ nome_item }}</h3>
-            <ul class="consumo-lista" style="display: none;">
-                {% for consumo in dados_item %}
-                <li>
-                    Data: {{ consumo['data_consumo'][:10] }}
-                    Hora: {{ consumo['data_consumo'][11:19] }},
-                    Quantidade: {{ consumo['quantidade'] }}
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endfor %}
+        {% if not dados_grafico %}
+            <p>Nenhum dado de consumo registrado ainda.</p>
+        {% else %}
+            {% for nome_item, dados_item in dados_grafico.items() %}
+            <div class="item" data-item-name="{{ nome_item }}">
+                 <h3 class="item-nome">
+                     <i class="fas fa-caret-right" style="width: 1em;"></i> {{ nome_item }}
+                     <span style="font-weight: normal; font-size: 0.8em; color: #666;"> ({{ dados_item | length }} registros)</span>
+                 </h3>
+                <ul class="consumo-lista">
+                    {% for consumo in dados_item %}
+                    <li>
+                        Data/Hora: <strong>{{ consumo['data_consumo'] | strftime }}</strong> | Quantidade: <strong>{{ consumo['quantidade'] }}</strong>
+                    </li>
+                    {% else %}
+                     <li>Nenhum consumo registrado para este item.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+             <hr style="border: 0; border-top: 1px solid #eee;">
+            {% endfor %}
+        {% endif %}
     </div>
 </body>
-
 </html>
