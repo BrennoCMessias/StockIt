@@ -1,4 +1,46 @@
-venv/
+# --- START OF FILE .gitignore ---
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+*.venv
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Databases
+*.sqlite3
+*.db       # <--- IGNORA O SEU database.db (Recomendado!)
+*.db-journal # Arquivo temporário do SQLite
+
+# IDE / Editor directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
 .DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Python Environments
+.env
+.python-version
+
+# Build artifacts
+/dist/
+/build/
+*.egg-info/
+
+# --- END OF FILE .gitignore ---
