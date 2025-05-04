@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gráficos de Consumo</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="itens-consumo">
+        {% for nome_item, dados_item in dados_grafico.items() %}
+        <div class="item">
+            <h3 class="item-nome">{{ nome_item }}</h3>
+            <canvas id="graficoCanvas-{{ loop.index }}" width="400" height="200" style="display: none;"></canvas>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        $(document).ready(function () {
+            // Função para criar gráfico de linha
+            function criarGrafico(nomeItem, dados) {
+                // Remover espaços do nome do item para usar como ID do canvas
+                const canvasId = 'graficoCanvas-' + nomeItem.replace(' ', '-');
+                const ctx = document.getElementById(canvasId).getContext('2d');
+
+                // Preparar os dados para o gráfico
+                const labels = dados.map(item => new Date(item.data_consumo).toLocaleDateString());
+                const data = dados.map(item => item.quantidade);
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Consumo ao Longo do Tempo',
+                            data: data,
+                            borderColor: 'rgb(75, 192, 192)',
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Data'
+                                }
+                            },
+                            y: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Quantidade Consumida'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Loop para criar o grafico quando clicar no item
+            var itens = document.querySelectorAll('.item-nome');
+                
+            itens.forEach(function(item) {
+                item.addEventListener('click', function() {
+                    var itemId = item.getAttribute('data-item-id');
+                    var graficoDiv = document.getElementById('grafico-' + itemId);
+        
+                    if (graficoDiv.style.display === "none") {
+                        graficoDiv.style.display = "block";
+                    } else {
+                        graficoDiv.style.display = "none";
+                    }
+
+                    criarGrafico(itemId);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Controle de Despensa Inteligente</title> <!-- Changed title -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Add Chart.js if needed for future graphs -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+    <style>
+        /* Add simple feedback style */
+        .feedback { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            display: none; /* Hidden by default */
+        }
+        .feedback.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .feedback.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #lista-previsao p.estoque-baixo { color: red; font-weight: bold; } /* Style for low stock warning */
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <button id="btn-estoque" class="btn-estoque">
+                <i class="fas fa-box-open"></i> Estoque
+            </button>
+            <button id="btn-estatisticas" class="btn-estatisticas">
+                <i class="fas fa-chart-bar"></i> Estatísticas
+            </button>
+            <button id="btn-previsao" class="btn-previsao">
+                <i class="fas fa-chart-line"></i> Previsão
+            </button>
+        </div>
+
+        <!-- Main content area -->
+        <div id="main-content" style="flex: 1; padding: 20px; overflow-y: auto;">
+             <!-- Feedback area -->
+            <div id="feedback-message" class="feedback"></div>
+
+            <!-- Container where dynamic content will be loaded -->
+            <div id="dynamic-container">
+                <!-- Default message or content -->
+                <h1>Bem-vindo!</h1>
+                <p>Selecione uma opção no menu lateral.</p>
+            </div>
+
+             <!-- Container specifically for prediction, shown/hidden as needed -->
+             <div id="previsao-container" style="display: none;">
+                <h2>Previsão de Consumo Semanal</h2>
+                 <button id="btn-gerar-lista" class="btn-adicionar-novo">
+                    <i class="fas fa-sync-alt"></i> Gerar/Atualizar Lista
+                 </button>
+                 <div id="lista-previsao" style="margin-top: 15px;">
+                    <!-- Prediction list will be generated here -->
+                    <p>Clique em "Gerar/Atualizar Lista" para ver as previsões.</p>
+                 </div>
+            </div>
+        </div>
+
+    </div> <!-- End of container -->
+
+    <script>
+        // --- Global State ---
+        let activeTab = null; // 'estoque', 'estatisticas', 'previsao'
+
+        // --- Utility Functions ---
+        function showFeedback(message, type = 'success') {
+            const feedbackDiv = $('#feedback-message');
+            feedbackDiv.text(message)
+                       .removeClass('success error')
+                       .addClass(type)
+                       .fadeIn();
+            // Automatically hide after a few seconds
+            setTimeout(() => { feedbackDiv.fadeOut(); }, 4000);
+        }
+
+        function clearFeedback() {
+             $('#feedback-message').hide().text('');
+        }
+
+        // Toggles visibility of the 'Add New Item' form
+        function toggleForm() {
+            $('#form-container').slideToggle(); // Use slideToggle for smoother effect
+             // Toggle button text/icon if needed
+            const btn = $('.btn-toggle-form');
+            if ($('#form-container').is(':visible')) {
+                 btn.html('<i class="fas fa-minus"></i> Esconder Formulário');
+            } else {
+                 btn.html('<i class="fas fa-plus"></i> Adicionar Novo Item');
+            }
+        }
+
+
+        // --- Content Loading Functions ---
+        function loadContent(url, targetContainerId, callback) {
+            clearFeedback();
+            const targetContainer = $(targetContainerId);
+            targetContainer.html('<p>Carregando...</p>'); // Show loading indicator
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+                    }
+                    return response.text();
+                })
+                .then(data => {
+                    targetContainer.html(data);
+                    if (callback) {
+                        callback(); // Execute callback after content is loaded
+                    }
+                })
+                .catch(error => {
+                    console.error(`Erro ao carregar ${url}:`, error);
+                    targetContainer.html(`<p style="color: red;">Erro ao carregar conteúdo. Tente novamente.</p>`);
+                    showFeedback(`Erro ao carregar ${url}: ${error.message}`, 'error');
+                });
+        }
+
+        function loadEstoque() {
+             loadContent('/estoque', '#dynamic-container', () => {
+                 console.log("Conteúdo do estoque carregado.");
+                 // Event listeners are now attached via delegation, no need to re-attach here specifically
+                 // unless there are initial actions needed AFTER load.
+             });
+        }
+
+        function loadEstatisticas() {
+            loadContent('/estatisticas', '#dynamic-container', () => {
+                 console.log("Conteúdo das estatísticas carregado.");
+                 // Add specific JS for statistics page if needed after load
+            });
+        }
+
+
+        // --- Prediction Logic ---
+        async function gerarPrevisao() {
+            console.log("Iniciando geração de previsão...");
+            const listaPrevisaoDiv = $('#lista-previsao');
+            listaPrevisaoDiv.html('<p>Calculando previsões...</p>'); // Loading indicator
+            clearFeedback();
+
+            try {
+                // Fetch both consumption and current stock data in parallel
+                const [consumoResponse, estoqueResponse] = await Promise.all([
+                    fetch('/api/consumo'), // API returns JSON
+                    fetch('/api/estoque')  // *** Use the new API endpoint for JSON stock data ***
+                ]);
+
+                // Check responses
+                if (!consumoResponse.ok) {
+                    throw new Error(`Erro ao buscar dados de consumo: ${consumoResponse.status} ${consumoResponse.statusText || ''}`);
+                }
+                 if (!estoqueResponse.ok) {
+                    throw new Error(`Erro ao buscar dados de estoque: ${estoqueResponse.status} ${estoqueResponse.statusText || ''}`);
+                }
+
+                // Parse JSON data
+                const consumoData = await consumoResponse.json();
+                const estoqueData = await estoqueResponse.json(); // Now expects JSON
+
+                console.log("Dados de consumo recebidos:", consumoData);
+                console.log("Dados de estoque recebidos:", estoqueData);
+
+                let previsoesHTML = '<p>Atenção: as previsões são baseadas na média histórica simples e servem como um guia. Verifique os dados antes de agir.</p><hr>';
+                let foundItems = false;
+
+                // Create a map for quick lookup of stock quantity by name
+                const estoqueMap = new Map();
+                estoqueData.forEach(item => {
+                    estoqueMap.set(item.nome, item.quantidade);
+                });
+
+
+                // Calculate prediction for each item with consumption history
+                for (const itemName in consumoData) {
+                    foundItems = true;
+                    const historicoConsumo = consumoData[itemName]; // Array of {data_consumo, quantidade}
+
+                    // Filter data for the last N days/weeks if needed for better prediction
+                    // For now, use all history
+                    const quantidades = historicoConsumo.map(d => d.quantidade);
+                    const previsaoSemanal = preverProximoConsumo(quantidades); // Using weekly average
+
+                    previsoesHTML += `<div><h4>${itemName}</h4>`;
+                    previsoesHTML += `<p>Previsão de consumo para a próxima semana: <strong>${previsaoSemanal.toFixed(1)}</strong> unidades.</p>`;
+
+                    const quantidadeAtual = estoqueMap.get(itemName);
+
+                    if (quantidadeAtual !== undefined) {
+                         previsoesHTML += `<p>Quantidade atual em estoque: ${quantidadeAtual}</p>`;
+                        if (quantidadeAtual < previsaoSemanal) {
+                            previsoesHTML += `<p class="estoque-baixo"><i class="fas fa-exclamation-triangle"></i> Atenção: Estoque baixo!</p>`;
+                        } else if (quantidadeAtual < previsaoSemanal * 1.5) { // Example: warning threshold
+                             previsoesHTML += `<p style="color: orange;"><i class="fas fa-info-circle"></i> Estoque pode precisar de reposição em breve.</p>`;
+                        }
+                    } else {
+                         previsoesHTML += `<p>Item não encontrado no estoque atual (pode ter sido removido).</p>`;
+                    }
+                     previsoesHTML += `</div><hr>`;
+                }
+
+                 // Check items in stock with NO consumption history
+                estoqueData.forEach(item => {
+                    if (!consumoData.hasOwnProperty(item.nome)) {
+                        foundItems = true;
+                        previsoesHTML += `<div><h4>${item.nome}</h4>`;
+                        previsoesHTML += `<p>Nenhum histórico de consumo registrado.</p>`;
+                        previsoesHTML += `<p>Quantidade atual em estoque: ${item.quantidade}</p>`;
+                         previsoesHTML += `</div><hr>`;
+                    }
+                });
+
+
+                if (!foundItems) {
+                     previsoesHTML = "<p>Nenhum item encontrado no estoque ou no histórico de consumo para gerar previsões.</p>";
+                }
+
+                listaPrevisaoDiv.html(previsoesHTML);
+                showFeedback("Lista de previsão gerada com sucesso.", 'success');
+
+            } catch (error) {
+                console.error("Ocorreu um erro ao gerar a previsão:", error);
+                // Display detailed error in the div for debugging
+                listaPrevisaoDiv.html(`<p style="color: red;">Ocorreu um erro ao gerar a previsão: ${error.message}. Verifique o console para mais detalhes.</p>`);
+                showFeedback(`Erro ao gerar previsão: ${error.message}`, 'error');
+            }
+        }
+
+        // Simple prediction model: Average weekly consumption based on historical data
+        function preverProximoConsumo(historicoQuantidades) {
+            if (!historicoQuantidades || historicoQuantidades.length === 0) {
+                return 0; // No history, no prediction
+            }
+
+            // --- More sophisticated approach needed here ---
+            // For now, let's just calculate the overall average consumption per entry.
+            // A better model would consider time (e.g., average per week/month).
+            // This simple average assumes each entry in 'consumo' represents a consumption event.
+
+            const totalConsumido = historicoQuantidades.reduce((sum, qty) => sum + qty, 0);
+            const numeroDeConsumos = historicoQuantidades.length;
+
+            // This isn't really a "weekly" prediction without time analysis.
+            // Let's assume we want the average *size* of a consumption event.
+            const mediaPorConsumo = numeroDeConsumos > 0 ? totalConsumido / numeroDeConsumos : 0;
+
+            // *** Placeholder: Replace with a time-based average (e.g., weekly) ***
+            // To calculate weekly average:
+            // 1. Get dates from consumoData[itemName]
+            // 2. Find the time span (first to last date)
+            // 3. Calculate total consumption / number of weeks in span
+            // For now, returning the simple average per consumption event:
+            // return mediaPorConsumo;
+
+            // Let's return total consumed / number of weeks (simple version)
+            // This requires dates which are in consumoData, not just quantities.
+            // --> Refactor needed: Pass full historicoConsumo [{date, qty}] to prediction function.
+            // TEMP FIX: Return simple average of quantities provided.
+             return numeroDeConsumos > 0 ? totalConsumido / numeroDeConsumos : 0;
+
+            // --- Proper Weekly Average Example (Needs Date Handling) ---
+            /*
+            if (historicoConsumo.length < 2) return historicoConsumo.length === 1 ? historicoConsumo[0].quantidade : 0;
+
+            const sortedHistory = historicoConsumo.sort((a, b) => new Date(a.data_consumo) - new Date(b.data_consumo));
+            const firstDate = new Date(sortedHistory[0].data_consumo);
+            const lastDate = new Date(sortedHistory[sortedHistory.length - 1].data_consumo);
+            const totalConsumed = sortedHistory.reduce((sum, item) => sum + item.quantidade, 0);
+
+            const timeDiffMillis = lastDate - firstDate;
+            const daysDiff = timeDiffMillis / (1000 * 60 * 60 * 24);
+            const weeksDiff = Math.max(1, daysDiff / 7); // Ensure at least 1 week if span is short
+
+            return totalConsumed / weeksDiff;
+            */
+        }
+
+
+        // --- Tab Switching Logic ---
+        function toggleAba(aba) {
+            console.log(`Tentando alternar para aba: ${aba}`);
+            activeTab = aba;
+            clearFeedback();
+
+            // Hide all specific containers initially
+            $('#previsao-container').hide();
+            $('#dynamic-container').hide(); // Hide the general dynamic area too
+
+            // Deactivate all sidebar buttons
+            $('.sidebar button').removeClass('active'); // Add 'active' class style in CSS if desired
+
+            if (aba === 'estoque') {
+                $('#dynamic-container').show();
+                loadEstoque();
+                $('#btn-estoque').addClass('active');
+            } else if (aba === 'estatisticas') {
+                $('#dynamic-container').show();
+                loadEstatisticas();
+                 $('#btn-estatisticas').addClass('active');
+            } else if (aba === 'previsao') {
+                $('#previsao-container').show();
+                // Optionally generate prediction immediately or wait for button click
+                 gerarPrevisao(); // Generate on tab switch
+                 $('#btn-previsao').addClass('active');
+            } else {
+                 // Show default welcome message if no known tab
+                 $('#dynamic-container').html('<h1>Bem-vindo!</h1><p>Selecione uma opção no menu lateral.</p>').show();
+                 activeTab = null;
+            }
+        }
+
+        // --- Document Ready - Event Listeners Setup ---
+        $(document).ready(function () {
+            console.log("Documento pronto. Anexando listeners...");
+
+            // Sidebar button clicks
+            $('#btn-estoque').on('click', function () {
+                toggleAba('estoque');
+            });
+
+            $('#btn-estatisticas').on('click', function () {
+                toggleAba('estatisticas');
+            });
+
+             $('#btn-previsao').on('click', function () {
+                toggleAba('previsao');
+            });
+
+            // --- Event Delegation for dynamic content ---
+            // Listen for clicks within the #main-content area
+            const mainContent = $('#main-content');
+
+             // Add new item form submission (inside #dynamic-container when stock is loaded)
+            mainContent.on('submit', '#form-adicionar', function (event) {
+                event.preventDefault();
+                console.log("Formulário Adicionar submetido.");
+                const formData = $(this).serialize();
+                $.post('/adicionar', formData)
+                    .done(function (response) {
+                        console.log("Item adicionado:", response.message);
+                        showFeedback(response.message || 'Item adicionado com sucesso!', 'success');
+                        loadEstoque(); // Reload the stock list
+                        // Optionally clear the form: $(this).trigger('reset'); toggleForm();
+                        $('#form-adicionar')[0].reset(); // Clear form fields
+                        toggleForm(); // Hide form
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        console.error("Erro ao adicionar:", jqXHR.responseJSON?.message || errorThrown);
+                        showFeedback('Erro ao adicionar: ' + (jqXHR.responseJSON?.message || errorThrown), 'error');
+                    });
+            });
+
+             // Consume button click (delegated)
+             mainContent.on('click', '.btn-consumir', function (event) {
+                event.preventDefault();
+                const button = $(this);
+                const itemId = button.data('item-id');
+                console.log(`Botão Consumir clicado para item ID: ${itemId}`);
+                
+                // Optional: Add visual feedback during request
+                button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.post('/consumir/' + itemId) // Changed to POST
+                    .done(function (response) {
+                         console.log("Item consumido:", response.message, "Nova qtd:", response.nova_quantidade);
+                         showFeedback(response.message || 'Item consumido com sucesso!', 'success');
+                         // Update quantity directly in the UI without full reload
+                         const itemBox = button.closest('.item-box');
+                         itemBox.find('.quantidade-display').text(response.nova_quantidade);
+                         // Re-enable button if quantity > 0
+                         if (response.nova_quantidade <= 0) {
+                              button.prop('disabled', true).html('<i class="fas fa-minus-circle"></i> Consumir'); // Keep disabled if 0
+                              // Optionally add a class like 'out-of-stock'
+                         } else {
+                              button.prop('disabled', false).html('<i class="fas fa-minus-circle"></i> Consumir');
+                         }
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        console.error("Erro ao consumir:", jqXHR.responseJSON?.message || errorThrown);
+                        showFeedback('Erro ao consumir: ' + (jqXHR.responseJSON?.message || 'Estoque zerado ou erro no servidor'), 'error');
+                         button.prop('disabled', false).html('<i class="fas fa-minus-circle"></i> Consumir'); // Re-enable on error
+                    });
+            });
+
+            // Edit button click (delegated) - Toggles the edit form
+            mainContent.on('click', '.btn-editar', function () {
+                const itemId = $(this).data('item-id');
+                console.log(`Botão Editar clicado para item ID: ${itemId}`);
+                $('#edit-form-' + itemId).slideToggle(); // Show/hide the specific edit form
+            });
+
+             // Cancel Edit button click (delegated)
+            mainContent.on('click', '.btn-editar-cancelar', function () {
+                const itemId = $(this).data('item-id'); // Get ID from button itself
+                console.log(`Botão Cancelar Edição clicado para item ID: ${itemId}`);
+                $('#edit-form-' + itemId).slideUp(); // Hide the specific edit form
+            });
+
+            // Edit form submission (delegated)
+            mainContent.on('submit', '.form-editar', function (event) {
+                event.preventDefault();
+                const form = $(this);
+                const itemId = form.data('item-id');
+                const formData = form.serialize();
+                console.log(`Formulário Editar submetido para item ID: ${itemId}`);
+                
+                const submitButton = form.find('.btn-editar-salvar');
+                submitButton.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Salvando...');
+
+
+                $.post('/editar/' + itemId, formData)
+                    .done(function (response) {
+                         console.log("Item editado:", response.message);
+                         showFeedback(response.message || 'Item editado com sucesso!', 'success');
+                         // Update UI directly is complex (name & quantity) - reloading is easier here
+                         loadEstoque(); // Reload the list to show changes
+                         // Or, update manually:
+                         // const itemBox = form.closest('.item-box');
+                         // const newName = form.find('input[name="nome"]').val();
+                         // const newQty = form.find('input[name="quantidade"]').val();
+                         // itemBox.find('h3').text(newName);
+                         // itemBox.find('.quantidade-display').text(newQty);
+                         // $('#edit-form-' + itemId).slideUp(); // Hide form
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        console.error("Erro ao editar:", jqXHR.responseJSON?.message || errorThrown);
+                        showFeedback('Erro ao editar: ' + (jqXHR.responseJSON?.message || errorThrown), 'error');
+                         submitButton.prop('disabled', false).html('<i class="fas fa-save"></i> Salvar'); // Re-enable button
+                    });
+            });
+
+            // Delete button click (delegated)
+            mainContent.on('click', '.btn-excluir', function () {
+                const button = $(this);
+                const itemId = button.data('item-id');
+                const itemBox = button.closest('.item-box');
+                const itemName = itemBox.find('h3').text();
+                console.log(`Botão Excluir clicado para item ID: ${itemId}`);
+
+                if (confirm(`Tem certeza que deseja excluir o item "${itemName}"?\nEsta ação não pode ser desfeita e removerá o histórico de consumo associado (se configurado).`)) {
+                    
+                    button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                    $.post('/excluir/' + itemId)
+                        .done(function (response) {
+                            console.log("Item excluído:", response.message);
+                            showFeedback(response.message || 'Item excluído com sucesso!', 'success');
+                            // Remove the item box from the DOM
+                            itemBox.fadeOut(400, function() { $(this).remove(); });
+                        })
+                        .fail(function (jqXHR, textStatus, errorThrown) {
+                            console.error("Erro ao excluir:", jqXHR.responseJSON?.message || errorThrown);
+                            showFeedback('Erro ao excluir: ' + (jqXHR.responseJSON?.message || errorThrown), 'error');
+                             button.prop('disabled', false).html('<i class="fas fa-trash-alt"></i> Excluir'); // Re-enable
+                        });
+                }
+            });
+
+             // Statistics item click (delegated) - Toggle consumption list
+            mainContent.on('click', '.item-nome', function (event) {
+                // Check if we are in the statistics view before toggling
+                if (activeTab === 'estatisticas') {
+                     console.log("Nome do item de estatística clicado.");
+                     // Find the parent '.item' and then the '.consumo-lista' within it
+                     $(this).closest('.item').find('.consumo-lista').slideToggle();
+                }
+            });
+
+             // Prediction generate button click
+            $('#btn-gerar-lista').on('click', function () {
+                 if (activeTab === 'previsao') {
+                    gerarPrevisao();
+                 } else {
+                     // Optionally switch to prediction tab first
+                     toggleAba('previsao'); // This will call gerarPrevisao()
+                 }
+            });
+
+            // Initial state - maybe show welcome or default tab
+             // toggleAba('estoque'); // Uncomment to load stock by default
+             console.log("Listeners anexados.");
+
+        }); // End of $(document).ready
+
+    </script>
+</body>
+
+</html>

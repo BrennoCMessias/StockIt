@@ -1,0 +1,273 @@
+body {
+    background-color: #f9f9f9;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background-color: #ffffff;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #343a40;
+    color: #ffffff;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    border-radius: 0;
+}
+
+.sidebar button,
+.sidebar .btn-estoque {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #495057;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar button:hover,
+.sidebar .btn-estoque:hover {
+    background-color: #6c757d;
+}
+
+.sidebar .btn-estoque {
+    background-color: #495057;
+    text-decoration: none;
+}
+
+.sidebar .btn-estoque:hover {
+    background-color: #5a6268;
+}
+
+.sidebar button i,
+.sidebar .btn-estoque i {
+    margin-right: 10px;
+}
+
+#estoque-container,
+#estatisticas-container {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #333;
+}
+
+.itens-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.item-box {
+    background-color: #f8f8f8;
+    padding: 15px;
+    border-radius: 8px;
+    width: calc(33.33% - 10px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.item-box:hover {
+    transform: scale(1);
+}
+
+.item-info {
+    text-align: center;
+}
+
+h3 {
+    color: #333;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+
+p {
+    color: #666;
+    font-size: 1rem;
+}
+
+button {
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #218838;
+}
+
+button:focus {
+    outline: none;
+}
+
+/* Botões personalizados */
+.btn-consumir {
+    background-color: #28a745;
+}
+
+.btn-editar {
+    background-color: #007bff;
+}
+
+.btn-editar-salvar {
+    background-color: #28a745;
+}
+
+.btn-editar-cancelar {
+    background-color: #dc3545;
+}
+
+.btn-adicionar-novo {
+    background-color: #007bff;
+    margin-bottom: 20px;
+}
+
+.btn-adicionar-novo:hover {
+    background-color: #0056b3;
+}
+
+.btn-excluir {
+    background-color: #dc3545;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 10px;
+    font-size: 1rem;
+}
+
+.btn-excluir:hover {
+    background-color: #c82333;
+}
+
+.btn-excluir i {
+    font-size: 1.2rem;
+}
+
+/* Botão de exibir formulário */
+.btn-toggle-form {
+    display: block;
+    margin: 20px auto;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    font-size: 16px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.btn-toggle-form:hover {
+    background-color: #45a049;
+}
+
+/* Formulários */
+.form-container {
+    display: none;
+    margin-top: 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.form-container.visible {
+    display: block;
+    opacity: 1;
+}
+
+.form-adicionar {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+    transition: border 0.3s;
+}
+
+input:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Formulário de edição (escondido inicialmente) */
+.edit-form {
+    display: none;
+    margin-top: 10px;
+}
+
+/* Estatísticas */
+.itens-consumo {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.itens-consumo .item {
+    background-color: #f8f8f8;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+}
+
+.itens-consumo .item h3 {
+    margin-top: 0;
+    cursor: pointer;
+}
+
+.itens-consumo .item ul {
+    list-style: none;
+    padding: 0;
+}
+
+.itens-consumo .item li {
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+}

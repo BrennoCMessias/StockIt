@@ -1,0 +1,9 @@
+      function toggleForm() {
+            const formContainer = document.getElementById('form-container');
+            formContainer.classList.toggle('visible');
+        }
+
+        function toggleEdit(itemId) {
+            var editForm = document.getElementById('edit-form-' + itemId);
+            editForm.style.display = editForm.style.display === 'block' ? 'none' : 'block';
+        }
